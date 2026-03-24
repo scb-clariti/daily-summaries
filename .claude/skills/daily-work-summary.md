@@ -48,7 +48,7 @@ Use only verified, connected sources. Do NOT use internet search or invent detai
 - **DO NOT summarize emails `USER_FULL_NAME` only received and did not act on.**
 
 ### Slack
-- Use `slack_search_public_and_private` to find messages sent by `USER_FULL_NAME` today. Suggested query: `from:<@SLACK_USER_ID> after:<today> before:<tomorrow>`, sort by `timestamp`.
+- Use `slack_search_public_and_private` to find messages sent by `USER_FULL_NAME` today. Suggested query: `from:<@SLACK_USER_ID> on:<today>`, sort by `timestamp`.
 - Include messages sent in channels, DMs, and threads.
 - **DO NOT summarize messages `USER_FULL_NAME` only received and did not respond to.**
 - Note: channel/DM name, message content summary, and any notable context (e.g., decision made, action item assigned).
@@ -81,12 +81,15 @@ This narrative becomes the **Transcript Source (Cleaned)** for the summary instr
 Using the narrative from Step 2 as input, produce the structured daily summary.
 
 **Summarization rules:**
-- One bullet per event/action/topic.
+- Group related activity into single bullets — do not create one bullet per Slack message.
 - Format: Who + What + Where/Tool + Why/Result.
 - Include people, tools, projects, locations.
+- Keep bullets concise: one sentence max. Omit filler exchanges (acknowledgements, one-word replies).
+- Only capture substantive actions: decisions made, things sent/shared, work completed, commitments given.
 - Add `(transcript available)` if a Calendar event had a linked transcript/notes.
 - Add `(transcript not available)` if a meeting is mentioned but no transcript found.
 - No vague commentary. No invented details.
+- Target: 5–10 bullets total for a typical day.
 
 **Output format** for the summary block:
 
