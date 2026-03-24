@@ -34,7 +34,7 @@ Use only verified, connected sources. Do NOT use internet search or invent detai
 - Note: page title, space, and nature of the change.
 
 ### Google Drive
-- Use `google_drive_search` to find files created or modified by Samuel today. Suggested query: `modifiedTime > '<today>T00:00:00' and 'me' in writers`.
+- Use `google_drive_search` to find files created or modified by Samuel today within `GDRIVE_ARTIFACTS_FOLDER_ID` (`GDRIVE_ARTIFACTS_FOLDER_PATH`). Suggested query: `modifiedTime > '<today>T00:00:00' and 'me' in writers and '<GDRIVE_ARTIFACTS_FOLDER_ID>' in parents`.
 - Note: file name, type, and nature of the change (created vs. edited).
 - Skip files that are auto-generated meeting artifacts (e.g. Gemini Notes already captured via Calendar).
 
@@ -62,6 +62,8 @@ Using the narrative from Step 2 as input, produce the structured daily summary.
 - USER_FULL_NAME: Samuel Couture Brochu
 - USER_TIMEZONE: Eastern (America/Toronto)
 - Date slug: `samuel-couture-brochu`
+- GDRIVE_ARTIFACTS_FOLDER_PATH: `My Drive/personal-ai-artifacts`
+- GDRIVE_ARTIFACTS_FOLDER_ID: `1_wGiMS2YN_2G8udVC_EKXI00Tw385qC5`
 
 **Summarization rules:**
 - One bullet per event/action/topic.
