@@ -44,8 +44,11 @@ Use only verified, connected sources. Do NOT use internet search or invent detai
 - Note: page title, space, and nature of the change.
 
 ### Google Drive
-- Use `google_drive_search` to find files created or modified by Samuel today within `GDRIVE_ARTIFACTS_FOLDER_ID` (`GDRIVE_ARTIFACTS_FOLDER_PATH`). Suggested query: `modifiedTime > '<today>T00:00:00' and 'me' in writers and '<GDRIVE_ARTIFACTS_FOLDER_ID>' in parents`.
-- Note: file name, type, and nature of the change (created vs. edited).
+- Use `google_drive_search` to find files created or modified by Samuel today within `GDRIVE_ARTIFACTS_FOLDER_ID` (`GDRIVE_ARTIFACTS_FOLDER_PATH`) and its subfolders. Run the following queries:
+  1. Direct children: `modifiedTime > '<today>T00:00:00' and '<GDRIVE_ARTIFACTS_FOLDER_ID>' in parents`
+  2. For each subfolder found, repeat with that subfolder's ID as the parent.
+- Known subfolders to always check: `meeting-transcripts` (ID: `1XPo5Qq7j1JLdSfiaw4JfDYQUScSINdSp`), `daily-summaries` (ID: `1z4MUWeH_xCR110-WqLU8oi0EJFjLLjQI`).
+- Note: file name, type, subfolder location, and nature of the change (created vs. edited).
 
 ---
 
