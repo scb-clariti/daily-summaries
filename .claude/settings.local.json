@@ -4,6 +4,8 @@
       "mcp__scheduled-tasks__list_scheduled_tasks",
       "Bash(gh repo:*)",
       "mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__google_drive_search",
+      "mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__google_drive_fetch",
+      "mcp__6ec975e1-fbf4-470a-beec-a0ec45c64a40__slack_search_public_and_private",
       "Bash(gh pr:*)"
     ]
   }
