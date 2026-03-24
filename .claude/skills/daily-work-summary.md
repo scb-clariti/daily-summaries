@@ -25,11 +25,10 @@ description: Gather today's work activity from Clariti stack and produce a struc
 ## STEP 0 — Load deferred tools
 
 Before gathering any data, use `ToolSearch` to load the following tools so they are available for subsequent steps:
-- `google_drive_search` (query: `google_drive_search`)
-- `google_drive_fetch` (query: `google_drive_fetch`)
-- `slack_search_public_and_private` (query: `slack_search_public_and_private`)
+- `google_drive_search` and `google_drive_fetch` — use query: `select:mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__google_drive_search,mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__google_drive_fetch`
+- `slack_search_public_and_private` — use query: `select:mcp__6ec975e1-fbf4-470a-beec-a0ec45c64a40__slack_search_public_and_private`
 
-This is required because these are deferred tools that are not active until explicitly fetched.
+This is required because these are deferred tools that are not active until explicitly fetched. Always use the `select:` syntax with full tool names to avoid keyword matching failures.
 
 ---
 
