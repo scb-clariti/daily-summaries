@@ -11,6 +11,16 @@ description: Gather today's work activity from Clariti stack and produce a struc
 
 ---
 
+## STEP 0 — Load deferred tools
+
+Before gathering any data, use `ToolSearch` to load the following tools so they are available for subsequent steps:
+- `google_drive_search` (query: `google_drive_search`)
+- `google_drive_fetch` (query: `google_drive_fetch`)
+
+This is required because these are deferred tools that are not active until explicitly fetched.
+
+---
+
 ## STEP 1 — Gather data from the Clariti stack
 
 Use only verified, connected sources. Do NOT use internet search or invent details. Only include data from TODAY (the current local date in America/Toronto).
@@ -36,7 +46,6 @@ Use only verified, connected sources. Do NOT use internet search or invent detai
 ### Google Drive
 - Use `google_drive_search` to find files created or modified by Samuel today within `GDRIVE_ARTIFACTS_FOLDER_ID` (`GDRIVE_ARTIFACTS_FOLDER_PATH`). Suggested query: `modifiedTime > '<today>T00:00:00' and 'me' in writers and '<GDRIVE_ARTIFACTS_FOLDER_ID>' in parents`.
 - Note: file name, type, and nature of the change (created vs. edited).
-- Skip files that are auto-generated meeting artifacts (e.g. Gemini Notes already captured via Calendar).
 
 ---
 
