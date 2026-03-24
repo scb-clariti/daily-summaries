@@ -33,6 +33,11 @@ Use only verified, connected sources. Do NOT use internet search or invent detai
 - Use `searchConfluenceUsingCql` to find pages created or edited by Samuel today. Suggested CQL: `contributor = currentUser() AND lastModified >= startOfDay()`.
 - Note: page title, space, and nature of the change.
 
+### Google Drive
+- Use `google_drive_search` to find files created or modified by Samuel today. Suggested query: `modifiedTime > '<today>T00:00:00' and 'me' in writers`.
+- Note: file name, type, and nature of the change (created vs. edited).
+- Skip files that are auto-generated meeting artifacts (e.g. Gemini Notes already captured via Calendar).
+
 ---
 
 ## STEP 2 — Compose the raw narrative (dictation stand-in)
@@ -42,6 +47,7 @@ Write a natural first-person-style narrative paragraph (2–5 sentences per topi
 - Actions taken on emails
 - Jira work (tickets updated, transitioned, commented on)
 - Confluence pages created/updated
+- Google Drive files created or meaningfully edited
 - Any notable cross-tool patterns (e.g., a Jira ticket discussed in a meeting)
 
 This narrative becomes the **Transcript Source (Cleaned)** for the summary instructions below.
