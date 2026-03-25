@@ -1,0 +1,19 @@
+project_name: daily-summaries
+project_type: "Automation / Personal Knowledge Management"
+project_level: 1
+output_folder: docs
+
+workflows:
+  product-brief: "docs/product-brief.md"
+  tech-spec: "docs/tech-spec.md"
+  prd: null
+  architecture: null
+  ux-design: null
+  sprint-planning: null
+  stories:
+    - id: "STORY-001"
+      title: "Interactive Setup Script"
+      status: "defined"
+      path: "docs/stories/STORY-001.md"
+
+last_updated: "2026-03-25"

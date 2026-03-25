@@ -1,0 +1,18 @@
+# Personal config — lives in the private data repo, not here
+config.yaml
+
+# Generated summaries — live in the private data repo, not here
+*-daily-summary-*.md
+weekly-rollup-*.md
+
+# Local Claude Code settings (machine-specific, not for sharing)
+.claude/settings.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+.env.*
+credentials.json
