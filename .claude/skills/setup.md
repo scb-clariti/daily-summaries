@@ -140,6 +140,28 @@ If yes:
 
 If No: set `google_drive.enabled: false`.
 
+### STEP 4b — Google Drive copy destination
+
+Ask:
+> "Would you like each summary file copied to a Google Drive folder after it's written? This keeps a synced copy in your Drive alongside your git history."
+> - Yes
+> - No — skip
+
+If yes:
+1. Suggest a sensible default inside the detected Drive path (or prompt freely if Drive was skipped):
+   - Default suggestion: `<drive_path>/daily-summaries` (or `~/My Drive/daily-summaries` on macOS)
+   > "Which folder should summaries be copied to?"
+   > Default: `<suggested_path>`
+   > (Enter a full absolute path)
+2. Validate with `test -d "<path>"`. If it does not exist:
+   > "That folder doesn't exist yet. Create it now?"
+   > - Yes → `mkdir -p "<path>"`
+   > - No — I'll create it manually later (continue, set `enabled: true` so the skill creates it at runtime)
+3. Store as `GDRIVE_COPY_PATH`.
+4. Set `outputs.google_drive_copy.enabled: true` and `outputs.google_drive_copy.path: "<GDRIVE_COPY_PATH>"` in the config.
+
+If no: set `outputs.google_drive_copy.enabled: false` and `outputs.google_drive_copy.path: ""`.
+
 ---
 
 ## STEP 5 — Data sources
@@ -260,6 +282,12 @@ user:
 # --- Google Drive (local sync via Google Drive for Desktop) ---
 google_drive:
   local_path: "<drive_path>"   # omit or leave blank if disabled
+
+# --- Output copies ---
+outputs:
+  google_drive_copy:
+    enabled: <true|false>
+    path: "<gdrive_copy_path>"   # absolute path to target folder; leave blank if disabled
 
 # --- Schedule ---
 schedule:
@@ -412,12 +440,25 @@ After creating/updating, call `mcp__scheduled-tasks__list_scheduled_tasks` and s
 
 If push fails, warn the user and print the error.
 
-**Migration offer:** If any `*-daily-summary-*.md` or `weekly-rollup-*.md` files exist in `SKILLS_REPO_PATH` (from a previous single-repo setup), ask:
+**Migration offer — skills repo:** If any `*-daily-summary-*.md` or `weekly-rollup-*.md` files exist in `SKILLS_REPO_PATH` (from a previous single-repo setup), ask:
 > "Found existing summary files in the skills repo. Move them to your data repo?"
 > - Yes, move them
 > - No, leave them
 
 If yes: copy the files to `DATA_REPO_PATH`, `git add`, commit with message `"Migrate existing summaries to data repo"`, and push.
+
+**Migration offer — Google Drive copy:** If `outputs.google_drive_copy.enabled` is `true`, check how many `*-daily-summary-*.md` and `weekly-rollup-*.md` files exist in `DATA_REPO_PATH`. If any are found, ask:
+> "Found <N> existing summary file(s) in your data repo. Copy them to your Google Drive folder now?"
+> - Yes, copy all existing summaries
+> - No, only copy new ones going forward
+
+If yes:
+1. Use `Glob` with pattern `*.md` in `DATA_REPO_PATH` to find all `*-daily-summary-*.md` and `weekly-rollup-*.md` files.
+2. Verify `GDRIVE_COPY_PATH` exists (`test -d`); create with `mkdir -p` if needed.
+3. For each file, run: `cp "DATA_REPO_PATH/<filename>" "GDRIVE_COPY_PATH/<filename>"`
+   - Skip files that already exist at the destination (do not overwrite).
+   - Note skipped files in the completion report.
+4. Report: "Copied <M> file(s) to `GDRIVE_COPY_PATH`. Skipped <K> already present."
 
 ---
 
@@ -438,6 +479,7 @@ Configuration:
   Rollup:     <Enabled / Disabled>
   Sources:    <list>
   Drive:      <path or "Disabled">
+  GDrive Copy: <path or "Disabled">
 
 Scheduled tasks:
   daily-work-summary    — <cron>  (next run: <datetime>)

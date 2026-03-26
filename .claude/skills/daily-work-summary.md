@@ -177,6 +177,22 @@ If not found: use content from Step 5 as-is.
 
 ---
 
+## STEP 7b — Copy to Google Drive (if configured)
+
+Check `config.yaml` → `outputs.google_drive_copy.enabled`. If `true`:
+
+1. Read `outputs.google_drive_copy.path` as `GDRIVE_COPY_PATH`.
+2. Verify the path exists: `test -d "<GDRIVE_COPY_PATH>"`.
+   - If it does not exist, attempt to create it: `mkdir -p "<GDRIVE_COPY_PATH>"`.
+   - If creation fails, note "Google Drive copy folder could not be created at `<GDRIVE_COPY_PATH>`" in the completion report and skip this step.
+3. Copy the summary file:
+   - `cp "DATA_REPO_PATH/FILE_SLUG-daily-summary-<YYYY-MM-DD>.md" "GDRIVE_COPY_PATH/FILE_SLUG-daily-summary-<YYYY-MM-DD>.md"`
+4. Confirm in the completion report: "Copied to Google Drive: `GDRIVE_COPY_PATH/FILE_SLUG-daily-summary-<YYYY-MM-DD>.md`"
+
+If `outputs.google_drive_copy.enabled` is `false` or the key is absent, skip silently.
+
+---
+
 ## STEP 8 — Display summary and completion report
 
 **Always display the full summary** in task output so the user can read it without opening the file.
@@ -187,6 +203,7 @@ Output the complete file content (frontmatter + all sections), then a short comp
 - Whether an existing file was found and merged
 - Cross-day context loaded (from which date)
 - Confirmation that the file was committed and pushed to `DATA_REPO_PATH`
+- Whether a Google Drive copy was made (path) or skipped/failed
 - Data sources that returned no results or were unavailable
 - Whether `config.yaml` was read successfully
 
