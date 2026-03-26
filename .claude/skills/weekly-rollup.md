@@ -129,6 +129,22 @@ tags:
 
 ---
 
+## STEP 4b — Copy to Google Drive (if configured)
+
+Check `config.yaml` → `outputs.google_drive_copy.enabled`. If `true`:
+
+1. Read `outputs.google_drive_copy.path` as `GDRIVE_COPY_PATH`.
+2. Verify the path exists: `test -d "<GDRIVE_COPY_PATH>"`.
+   - If it does not exist, attempt to create it: `mkdir -p "<GDRIVE_COPY_PATH>"`.
+   - If creation fails, note "Google Drive copy folder could not be created at `<GDRIVE_COPY_PATH>`" in the completion report and skip this step.
+3. Copy the rollup file:
+   - `cp "DATA_REPO_PATH/weekly-rollup-<YYYY>-W<WW>.md" "GDRIVE_COPY_PATH/weekly-rollup-<YYYY>-W<WW>.md"`
+4. Confirm in the completion report: "Copied to Google Drive: `GDRIVE_COPY_PATH/weekly-rollup-<YYYY>-W<WW>.md`"
+
+If `outputs.google_drive_copy.enabled` is `false` or the key is absent, skip silently.
+
+---
+
 ## STEP 5 — Completion report
 
 Print:
