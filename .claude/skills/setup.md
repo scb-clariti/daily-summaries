@@ -6,8 +6,8 @@ description: Interactive setup wizard for Daily Summaries — configures identit
 ## Daily Summaries — Setup Wizard
 
 This skill walks you through a one-time setup. By the end you will have:
-- A **private data repo** (your summaries and config live here, never public)
-- **Scheduled tasks** that pull skills from this repo and write summaries to your data repo
+- A place for your summaries — either a **private GitHub repo** or a **Google Drive folder**
+- **Scheduled tasks** that pull skills from this repo and write summaries to your data location
 - All MCP connectors tested and permissions granted
 
 ---
@@ -18,27 +18,58 @@ This skill walks you through a one-time setup. By the end you will have:
 1. Run `uname -s` to detect OS:
    - `Darwin` → macOS
    - `MINGW*`, `MSYS*`, `CYGWIN*` → Windows (Git Bash)
-2. Run `git config user.name` to get the default name.
+2. Run `git config user.name` to get the default name (if git is available; skip if not).
 3. Detect timezone:
    - macOS: `readlink /etc/localtime | sed 's|.*/zoneinfo/||'`
    - Windows: `powershell -Command "[System.TimeZoneInfo]::Local.Id"` then map to IANA (e.g., "Eastern Standard Time" → "America/Toronto", "Pacific Standard Time" → "America/Los_Angeles", "Central Standard Time" → "America/Chicago", "Mountain Standard Time" → "America/Denver")
 
 ### Detect SKILLS_REPO_PATH
 4. Run `pwd` in Bash. This is `SKILLS_REPO_PATH` — the directory where this setup wizard is running (the cloned public repo).
-5. Run `git rev-parse --is-inside-work-tree` to confirm we are inside the skills repo.
+5. If git is available, run `git rev-parse --is-inside-work-tree` to confirm we are inside the skills repo.
+
+### Pre-flight: GitHub + Google Drive availability
+6. **GitHub check**: Run `gh --version` to check if `gh` is installed, then `gh auth status` to check authentication. Record result as `GH_AVAILABLE = true | false`.
+7. **Google Drive check**: Auto-detect Google Drive for Desktop at common paths:
+   - macOS: `~/Library/CloudStorage/GoogleDrive-*/My Drive` or `~/Google Drive/My Drive`
+   - Windows: `C:\Users\<username>\My Drive`, `G:\My Drive`, `C:\Users\<username>\Google Drive`
+   - Validate with `test -d`. Record result as `GDRIVE_AVAILABLE = true | false` and store the detected path.
+8. **Gate check**: If `GH_AVAILABLE = false` AND `GDRIVE_AVAILABLE = false`:
+   > "Setup requires at least one storage destination for your summaries — either a GitHub account or Google Drive for Desktop. Please set up one of the following, then re-run setup:"
+   > ```
+   > Option A — GitHub:
+   >   macOS:   brew install gh
+   >   Windows: winget install --id GitHub.cli
+   >   Then:    gh auth login
+   >
+   > Option B — Google Drive for Desktop:
+   >   Install from https://www.google.com/drive/download/
+   > ```
+   Stop.
+9. **Set STORAGE_MODE**:
+   - If `GH_AVAILABLE = true`: set `STORAGE_MODE = github` (GitHub is the primary storage; Google Drive copy is optional later).
+   - If `GH_AVAILABLE = false` and `GDRIVE_AVAILABLE = true`: set `STORAGE_MODE = drive` (summaries are written directly to the Google Drive folder — no git).
 
 ---
 
 ## STEP 1 — Existing config check
 
-Check if a sibling data repo already exists by looking for directories named `*-journal` or `*-daily*` next to `SKILLS_REPO_PATH`. Also check if `config.yaml` exists anywhere nearby.
+Check if a sibling data repo already exists by looking for directories named `*-journal` or `*-daily*` next to `SKILLS_REPO_PATH`. Also check if `config.yaml` exists anywhere nearby. If `STORAGE_MODE = drive`, also look for `config.yaml` inside the detected Google Drive path (e.g., `<drive_path>/daily-summaries/config.yaml`).
 
 If a previous setup is detected, ask:
 > "It looks like you may have run setup before. What would you like to do?"
 > - Start fresh — create a new data repo and overwrite config
 > - Re-run setup on existing data repo — update config only
 
-If "Re-run on existing": ask for the `DATA_REPO_PATH` (the local path to the existing data repo), load `config.yaml` from there as defaults, and skip STEP 2 (data repo creation).
+If "Re-run on existing": ask for the `DATA_REPO_PATH` (the local path to the existing data repo or Drive folder), load `config.yaml` from there as defaults, and skip STEP 3 (data repo creation).
+
+### Migration: Drive → GitHub
+
+If a previous config is found with `storage.mode: drive` AND `GH_AVAILABLE = true` (i.e., the user now has GitHub set up), ask:
+> "Your previous setup saved summaries to Google Drive only. You now have GitHub available. Would you like to migrate to a private GitHub repo?"
+> - **Yes, migrate to GitHub** — create a private repo and copy existing summaries into it
+> - **No, keep using Google Drive**
+
+If **Yes**: set `STORAGE_MODE = github`. After the new GitHub data repo is created in Step 3, copy all existing `*-daily-summary-*.md` and `weekly-rollup-*.md` files from the Drive folder to `DATA_REPO_PATH`, then `git add`, commit with message `"Migrate existing summaries from Google Drive"`, and push.
 
 ---
 
@@ -61,9 +92,9 @@ Ask:
 
 ---
 
-## STEP 3 — Create the private data repo
+## STEP 3 — Create the data storage
 
-The data repo stores your `config.yaml` and all generated summary files. It is always **private**.
+### GitHub path (STORAGE_MODE = github)
 
 Ask:
 > "What should your private data repo be named?"
@@ -73,7 +104,7 @@ Ask:
 
 Ask:
 > "Which GitHub account should it be created under?"
-> Run `gh auth status` to detect the logged-in account. Offer that as default.
+> Offer the account detected from `gh auth status` as default.
 
 **Check if repo already exists:**
 Run `gh repo list <account> --json name --jq '.[].name'` and check if the name is already taken.
@@ -87,17 +118,7 @@ Run `gh repo list <account> --json name --jq '.[].name'` and check if the name i
    Example: if `SKILLS_REPO_PATH` = `/home/user/work/daily-summaries`, then `sibling_path` = `/home/user/work/daily-summaries-journal`
 2. Verify the clone succeeded with `ls <sibling_path>`.
 
-**If `gh` is not installed:**
-Print:
-```
-GitHub CLI (gh) is required. Install it:
-  macOS:   brew install gh
-  Windows: winget install --id GitHub.cli
-Then authenticate: gh auth login
-```
-Stop and ask the user to retry after installing.
-
-Set `DATA_REPO_PATH` = the absolute local path to the data repo.
+Set `DATA_REPO_PATH` = the absolute local path to the cloned repo.
 
 **Initialize data repo:**
 - Create a `.gitignore` in `DATA_REPO_PATH`:
@@ -121,7 +142,37 @@ Set `DATA_REPO_PATH` = the absolute local path to the data repo.
 
 ---
 
+### Google Drive path (STORAGE_MODE = drive)
+
+The Google Drive path was already detected in Step 0. Use it to create the summaries folder.
+
+Ask:
+> "Which folder in Google Drive should summaries be saved to?"
+> Default: `<detected_drive_path>/daily-summaries`
+> (Enter a full absolute path, or press Enter for the default)
+
+1. Run `mkdir -p "<chosen_path>"` to create the folder if it doesn't exist.
+2. Validate with `test -d "<chosen_path>"`.
+
+Set `DATA_REPO_PATH` = the chosen Google Drive folder path.
+
+Create a `README.md` in `DATA_REPO_PATH`:
+```markdown
+# Daily Summaries — Private Journal
+
+This folder contains generated daily work summaries and configuration.
+It is managed automatically by Claude Code scheduled tasks and synced via Google Drive.
+
+Do not edit files here manually unless you know what you're doing.
+```
+
+---
+
 ## STEP 4 — Google Drive for Desktop
+
+**If `STORAGE_MODE = drive`:** Google Drive was already detected and configured in Step 0 and Step 3. Set `google_drive.local_path` to the detected Drive root path, set `outputs.google_drive_copy.enabled: false` (summaries already write directly to Drive — no copy needed). Skip the rest of this step.
+
+**If `STORAGE_MODE = github`:**
 
 Ask:
 > "Do you have Google Drive for Desktop installed and syncing?"
@@ -129,7 +180,7 @@ Ask:
 > - No — skip Google Drive integration
 
 If yes:
-1. Auto-detect common paths:
+1. Use the Drive path already detected in Step 0 (if `GDRIVE_AVAILABLE = true`). If not detected, auto-detect common paths:
    - macOS: `~/Library/CloudStorage/GoogleDrive-*/My Drive` or `~/Google Drive/My Drive`
    - Windows: `C:\Users\<username>\My Drive`, `G:\My Drive`, `C:\Users\<username>\Google Drive`
 2. If found, propose it:
@@ -272,6 +323,11 @@ config_version: 1
 # --- Skills repo (public) ---
 skills_repo_path: "<SKILLS_REPO_PATH>"   # local path to the cloned public repo
 
+# --- Storage ---
+storage:
+  mode: "<github|drive>"       # github = private GitHub repo; drive = Google Drive folder only
+  remote_url: "<github_repo_url>"   # blank if drive mode
+
 # --- Your identity ---
 user:
   full_name: "<full_name>"
@@ -379,8 +435,9 @@ Use `ToolSearch` to load the scheduled task tools:
 ToolSearch query: "select:mcp__scheduled-tasks__create_scheduled_task,mcp__scheduled-tasks__list_scheduled_tasks,mcp__scheduled-tasks__update_scheduled_task"
 ```
 
-Detect the default branch: `cd DATA_REPO_PATH && git branch --show-current` → `DATA_BRANCH`
-Detect the skills branch: `cd SKILLS_REPO_PATH && git branch --show-current` → `SKILLS_BRANCH`
+If `STORAGE_MODE = github`:
+- Detect the default branch: `cd DATA_REPO_PATH && git branch --show-current` → `DATA_BRANCH`
+- Detect the skills branch: `cd SKILLS_REPO_PATH && git branch --show-current` → `SKILLS_BRANCH`
 
 Check existing tasks with `mcp__scheduled-tasks__list_scheduled_tasks`.
 
@@ -395,9 +452,9 @@ Use `mcp__scheduled-tasks__create_scheduled_task` (or `update_scheduled_task`) w
 - `taskId`: `daily-work-summary`
 - `description`: `Gather today's work activity and produce a structured daily summary`
 - `cronExpression`: the cron from Step 7
-- `prompt`: see template below
+- `prompt`: use the template matching the current `STORAGE_MODE` (see below)
 
-**Daily task prompt template:**
+**Daily task prompt template (STORAGE_MODE = github):**
 ```
 ## Instructions
 
@@ -416,6 +473,23 @@ DATA_REPO_PATH: <DATA_REPO_PATH>
 IMPORTANT: The skill file and config are the single source of truth. Do not use cached instructions from prior runs.
 ```
 
+**Daily task prompt template (STORAGE_MODE = drive):**
+```
+## Instructions
+
+SKILLS_REPO_PATH: <SKILLS_REPO_PATH>
+DATA_REPO_PATH: <DATA_REPO_PATH>
+
+1. Read the skill file at: SKILLS_REPO_PATH/.claude/skills/daily-work-summary.md
+2. Read config at: DATA_REPO_PATH/config.yaml
+3. Execute all steps defined in the skill file exactly as written.
+   - DATA_REPO_PATH is your working directory for all file reads and writes.
+   - All summary files are written directly to DATA_REPO_PATH (a Google Drive folder — no git).
+   - Google Drive for Desktop syncs the files automatically.
+
+IMPORTANT: The skill file and config are the single source of truth. Do not use cached instructions from prior runs.
+```
+
 ### Weekly rollup task (if enabled in Step 7)
 
 Same pattern: check if `weekly-rollup` exists, ask to update or create.
@@ -423,7 +497,7 @@ Same pattern: check if `weekly-rollup` exists, ask to update or create.
 - `taskId`: `weekly-rollup`
 - `description`: `Synthesize the week's daily summaries into a weekly rollup`
 - `cronExpression`: rollup day at 30 minutes after daily time (e.g., if daily is `3 17 * * 1-5`, rollup is `33 17 * * 5`)
-- `prompt`: same template but referencing `.claude/skills/weekly-rollup.md` instead
+- `prompt`: same template (matching the current `STORAGE_MODE` variant) but referencing `.claude/skills/weekly-rollup.md` instead
 
 ### Verify
 
@@ -431,7 +505,9 @@ After creating/updating, call `mcp__scheduled-tasks__list_scheduled_tasks` and s
 
 ---
 
-## STEP 12 — Commit and push data repo
+## STEP 12 — Save config and finalize
+
+### If STORAGE_MODE = github:
 
 1. `cd DATA_REPO_PATH`
 2. `git add config.yaml README.md .gitignore`
@@ -460,14 +536,20 @@ If yes:
    - Note skipped files in the completion report.
 4. Report: "Copied <M> file(s) to `GDRIVE_COPY_PATH`. Skipped <K> already present."
 
+### If STORAGE_MODE = drive:
+
+1. Verify `config.yaml` and `README.md` were written to `DATA_REPO_PATH` (the Google Drive folder).
+2. No git operations — files are synced automatically by Google Drive for Desktop.
+
 ---
 
 ## STEP 13 — Print summary
 
+**If STORAGE_MODE = github:**
 ```
 Setup complete!
 
-Repos:
+Storage:  GitHub (private repo)
   Skills (public):  <SKILLS_REPO_PATH>  → <skills_github_url>
   Data   (private): <DATA_REPO_PATH>    → <data_github_url>
 
@@ -490,6 +572,37 @@ Connectivity:
   Gmail:           <✓ / ✗>
   Slack:           <✓ / ✗>
   Google Drive:    <✓ / ✗>
+```
+
+**If STORAGE_MODE = drive:**
+```
+Setup complete!
+
+Storage:  Google Drive (no GitHub)
+  Skills:     <SKILLS_REPO_PATH>
+  Summaries:  <DATA_REPO_PATH>  (synced via Google Drive for Desktop)
+
+Configuration:
+  Name:       <full_name>
+  Timezone:   <timezone>
+  Slug:       <file_slug>
+  Schedule:   <human-readable, e.g., "Weekdays at 5:00 PM ET">
+  Rollup:     <Enabled / Disabled>
+  Sources:    <list>
+
+Scheduled tasks:
+  daily-work-summary    — <cron>  (next run: <datetime>)
+  weekly-rollup         — <cron or "Not created">
+
+Connectivity:
+  Google Calendar: <✓ / ✗>
+  Gmail:           <✓ / ✗>
+  Slack:           <✓ / ✗>
+  Google Drive:    <✓ / ✗>
+
+Note: Summaries are saved to Google Drive only. To migrate to a
+private GitHub repo later, install gh (brew install gh), authenticate
+(gh auth login), and re-run setup.
 ```
 
 Then print the checklist for anything that failed:
